@@ -1,108 +1,49 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Source = { text?: string; page?: number; score?: number };
 
-type AssistantToken =
-  | { type: 'heading'; text: string }
-  | { type: 'paragraph'; text: string }
-  | { type: 'list'; items: string[] };
-
-function tokenizeAssistantContent(content: string): AssistantToken[] {
-  const lines = content.replace(/\r\n/g, '\n').split('\n');
-  const tokens: AssistantToken[] = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i].trim();
-
-    if (!line) {
-      i += 1;
-      continue;
-    }
-
-    const headingMatch = line.match(/^\*\*?\s*([^:*][^:]*)\s*:\s*\*\*?$/) || line.match(/^([^:*][^:]{1,60}):$/);
-    if (headingMatch) {
-      tokens.push({ type: 'heading', text: headingMatch[1].trim() });
-      i += 1;
-      continue;
-    }
-
-    const listStart = line.match(/^([-*•]|\d+\.)\s+(.+)$/);
-    if (listStart) {
-      const items: string[] = [];
-      while (i < lines.length) {
-        const listLine = lines[i].trim();
-        const listMatch = listLine.match(/^([-*•]|\d+\.)\s+(.+)$/);
-        if (!listMatch) {
-          break;
-        }
-        items.push(listMatch[2].trim());
-        i += 1;
-      }
-      tokens.push({ type: 'list', items });
-      continue;
-    }
-
-    const paragraphLines: string[] = [];
-    while (i < lines.length) {
-      const paragraphLine = lines[i].trim();
-      if (!paragraphLine) {
-        break;
-      }
-      if (paragraphLine.match(/^\*\*?\s*([^:*][^:]*)\s*:\s*\*\*?$/) || paragraphLine.match(/^([^:*][^:]{1,60}):$/)) {
-        break;
-      }
-      if (paragraphLine.match(/^([-*•]|\d+\.)\s+(.+)$/)) {
-        break;
-      }
-      paragraphLines.push(paragraphLine);
-      i += 1;
-    }
-    tokens.push({ type: 'paragraph', text: paragraphLines.join(' ') });
-  }
-
-  return tokens;
-}
-
 function AssistantContent({ content }: { content: string }) {
-  const tokens = tokenizeAssistantContent(content);
-
-  if (tokens.length === 0) {
-    return <p className="leading-7">{content}</p>;
-  }
-
   return (
-    <div className="space-y-3 leading-7">
-      {tokens.map((token, index) => {
-        if (token.type === 'heading') {
-          return (
-            <h3
-              key={`${token.type}-${index}`}
-              className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-600"
+    <div className="leading-7 text-slate-800">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => <h3 className="mb-2 text-base font-semibold text-slate-900">{children}</h3>,
+          h2: ({ children }) => <h3 className="mb-2 text-base font-semibold text-slate-900">{children}</h3>,
+          h3: ({ children }) => (
+            <h3 className="mb-1 text-sm font-semibold uppercase tracking-[0.12em] text-slate-600">{children}</h3>
+          ),
+          h4: ({ children }) => (
+            <h4 className="mb-1 text-sm font-semibold uppercase tracking-[0.12em] text-slate-600">{children}</h4>
+          ),
+          p: ({ children }) => <p className="mb-3">{children}</p>,
+          ul: ({ children }) => <ul className="mb-3 list-disc space-y-1.5 pl-5">{children}</ul>,
+          ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1.5 pl-5">{children}</ol>,
+          li: ({ children }) => <li>{children}</li>,
+          strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
+          em: ({ children }) => <em className="italic">{children}</em>,
+          code: ({ children }) => (
+            <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[0.85em] text-slate-900">{children}</code>
+          ),
+          hr: () => <hr className="my-3 border-slate-200" />,
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="font-medium text-[#183a63] underline underline-offset-2"
             >
-              {token.text}
-            </h3>
-          );
-        }
-
-        if (token.type === 'list') {
-          return (
-            <ul key={`${token.type}-${index}`} className="list-disc space-y-1.5 pl-5 text-slate-800">
-              {token.items.map((item, itemIndex) => (
-                <li key={`${item}-${itemIndex}`}>{item}</li>
-              ))}
-            </ul>
-          );
-        }
-
-        return (
-          <p key={`${token.type}-${index}`} className="text-slate-800">
-            {token.text}
-          </p>
-        );
-      })}
+              {children}
+            </a>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }
@@ -158,7 +99,7 @@ export default function Page() {
                   </p>
                 )}
 
-                <span
+                <div
                   className={
                     m.role === 'user'
                       ? 'inline-block max-w-[92%] rounded-xl bg-[#183a63] px-4 py-2.5 text-sm text-white sm:max-w-[82%]'
@@ -170,7 +111,7 @@ export default function Page() {
                   ) : (
                     m.content
                   )}
-                </span>
+                </div>
 
                 {m.role === 'assistant' &&
                   m.toolInvocations?.map(
