@@ -19,9 +19,9 @@ import { openai } from '@ai-sdk/openai';
 // pdf-parse uses CommonJS; default-import the parser fn
 import pdfParse from 'pdf-parse';
 
-const PDF_PATH = path.join(process.cwd(), 'data', 'sample.pdf');
-const CHUNK_SIZE = 800;
-const CHUNK_OVERLAP = 100;
+const PDF_PATH = path.join(process.cwd(), 'data', '2025_MORB.pdf');
+const CHUNK_SIZE = 1000;
+const CHUNK_OVERLAP = 200;
 
 type Chunk = { text: string; page: number };
 
@@ -76,25 +76,30 @@ async function main() {
   const chunks = await loadAndChunkPdf(PDF_PATH);
   console.log(`  produced ${chunks.length} chunks across ${new Set(chunks.map(c => c.page)).size} page(s)`);
 
-  console.log('Embedding…');
-  const { embeddings } = await embedMany({
-    model: openai.embedding('text-embedding-3-small'),
-    values: chunks.map((c) => c.text),
-  });
-
   const index = new Index();
-  const records = chunks.map((c, i) => ({
-    id: `chunk_${i}`,
-    vector: embeddings[i],
-    metadata: { text: c.text, page: c.page },
-  }));
+  const EMBED_BATCH = 100; // tune down if still too large
+  let globalId = 0;
 
-  console.log(`Upserting ${records.length} chunks to Upstash Vector…`);
-  // Upstash supports up to 1000 vectors per upsert; chunk if needed.
-  const BATCH = 100;
-  for (let i = 0; i < records.length; i += BATCH) {
-    await index.upsert(records.slice(i, i + BATCH));
+  console.log(`Embedding + upserting ${chunks.length} chunks in batches...`);
+
+  for (let i = 0; i < chunks.length; i += EMBED_BATCH) {
+    const batch = chunks.slice(i, i + EMBED_BATCH);
+
+    const { embeddings } = await embedMany({
+      model: openai.embedding('text-embedding-3-small'),
+      values: batch.map((c) => c.text),
+    });
+
+    const records = batch.map((c, j) => ({
+      id: `chunk_${globalId + j}`,
+      vector: embeddings[j],
+      metadata: { text: c.text, page: c.page },
+    }));
+
+    await index.upsert(records);
+    globalId += batch.length;
   }
+
   console.log('✅ Done. Run `npm run dev` and chat at http://localhost:3000');
 }
 

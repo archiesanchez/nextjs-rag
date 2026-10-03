@@ -2,5 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body { height: 100%; }
-body { background: #f8fafc; color: #0f172a; }
+:root {
+	--bsp-navy-900: #102a43;
+	--bsp-navy-800: #1d3a5f;
+	--bsp-gold-500: #b88a44;
+	--bsp-surface: #ffffff;
+	--bsp-muted: #f4f7fb;
+	--bsp-line: #d7e0ea;
+	--bsp-text: #13273f;
+}
+
+html,
+body {
+	height: 100%;
+}
+
+body {
+	color: var(--bsp-text);
+	background:
+		linear-gradient(180deg, rgba(16, 42, 67, 0.08), rgba(16, 42, 67, 0) 260px),
+		radial-gradient(circle at 85% 10%, rgba(184, 138, 68, 0.11), transparent 220px),
+		var(--bsp-muted);
+}
+
+.bsp-shell {
+	background: linear-gradient(180deg, var(--bsp-navy-900), var(--bsp-navy-800));
+}
+
+.bsp-card {
+	background: var(--bsp-surface);
+	border: 1px solid var(--bsp-line);
+	border-radius: 16px;
+	box-shadow: 0 10px 26px rgba(16, 42, 67, 0.08);
+}
+
+.bsp-divider {
+	border-top: 1px solid var(--bsp-line);
+}
+
+.bsp-chip {
+	border: 1px solid var(--bsp-line);
+	border-radius: 9999px;
+	padding: 0.2rem 0.7rem;
+	font-size: 0.7rem;
+	line-height: 1rem;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: #425b76;
+	background: #f8fbff;
+}
+
+.bsp-assistant-accent {
+	border-left: 3px solid var(--bsp-gold-500);
+}
+
+.bsp-appear {
+	animation: bsp-fade-in 260ms ease-out;
+}
+
+@keyframes bsp-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

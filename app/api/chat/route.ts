@@ -19,15 +19,18 @@ export async function POST(req: Request) {
   const result = streamText({
     model: openai('gpt-4o-mini'),
     system:
-      'You are a helpful assistant for the Acme Widget API specification. ' +
+      'You are a helpful assistant for the Manual of Regulations of the Philippine Central Bank. ' +
       'Use the getInformation tool whenever the user asks a question whose ' +
-      'answer might be in the spec. If the spec does not cover something, ' +
-      'say so directly rather than guessing.',
+      'answer might be in the document. If the document does not cover something, ' +
+      'say so directly rather than guessing. ' +
+      'Format responses for readability using this structure: ' +
+      '"Short answer:", "Key points:", "Regulatory basis:", and "Practical takeaway:". ' +
+      'Keep sections concise, use short bullet points where possible, and avoid dense paragraphs.',
     messages,
     tools: {
       getInformation: tool({
         description:
-          'Look up information from the Acme Widget API spec. Use this whenever the user asks a substantive question about the API, its endpoints, auth, rate limits, or behavior.',
+          'Look up information from the MORB. Use this whenever the user asks a substantive question about Philippine banking regulations.',
         parameters: z.object({
           query: z
             .string()
